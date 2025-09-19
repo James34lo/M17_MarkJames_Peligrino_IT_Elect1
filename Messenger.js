@@ -14,6 +14,7 @@ import {
 // Custom FlatList component to display messages
 const MyFlatList = ({ messages }) => {
   return (
+    
     <FlatList
       data={messages}
       keyExtractor={(item) => item.id.toString()}
