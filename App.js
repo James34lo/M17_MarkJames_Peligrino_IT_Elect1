@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View, ActivityIndicator, Alert } from "react-native";
-import { initDatabase, registerUser, loginUser } from "./database";
+import { initDatabase, registerUser, loginUser, updateProfilePicture } from "./database";
 import LoginScreen from "./LoginScreen";
 import RegisterScreen from "./RegisterScreen";
 import HomeScreen from "./HomeScreen";
@@ -85,6 +85,25 @@ export default function App() {
     setSelectedChatUser(null);
   };
 
+  const handleProfilePictureUpdate = async (imagePath) => {
+    try {
+      const result = await updateProfilePicture(currentUser.id, imagePath);
+      if (result.success) {
+        // Update the user state with new profile picture
+        setCurrentUser({
+          ...currentUser,
+          profile_picture: imagePath,
+        });
+        Alert.alert("Success", "Profile picture updated!");
+      } else {
+        Alert.alert("Error", result.error || "Failed to update profile picture");
+      }
+    } catch (error) {
+      Alert.alert("Error", "An error occurred while updating profile picture");
+      console.error("Profile picture update error:", error);
+    }
+  };
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -126,6 +145,7 @@ export default function App() {
           user={currentUser}
           onLogout={handleLogout}
           onOpenChat={handleOpenChat}
+          onProfilePictureUpdate={handleProfilePictureUpdate}
         />
         <StatusBar style="auto" />
       </>

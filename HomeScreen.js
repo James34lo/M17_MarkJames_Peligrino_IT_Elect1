@@ -5,15 +5,64 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
+  Image,
+  Alert,
+  ScrollView,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 
-const HomeScreen = ({ user, onLogout, onOpenChat }) => {
+const HomeScreen = ({ user, onLogout, onOpenChat, onProfilePictureUpdate }) => {
+  const handlePickImage = async () => {
+    try {
+      // Request media library permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission Denied", "Camera roll permission is required");
+        return;
+      }
+
+      // Launch image picker with no options to avoid native enum casting issues
+      const result = await ImagePicker.launchImageLibraryAsync();
+
+      if (!result.canceled) {
+        const selectedImage = result.assets[0];
+        onProfilePictureUpdate(selectedImage.uri);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to pick image");
+      console.error("Image picker error:", error);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
+          {/* Profile Picture */}
+          <TouchableOpacity
+            style={styles.profileImageContainer}
+            onPress={handlePickImage}
+          >
+            {user.profile_picture ? (
+              <Image
+                source={{ uri: user.profile_picture }}
+                style={styles.profileImage}
+              />
+            ) : (
+              <View style={styles.profileImagePlaceholder}>
+                <Text style={styles.placeholderText}>
+                  {user.username.charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
+            <View style={styles.editBadge}>
+              <Text style={styles.editBadgeText}>📷</Text>
+            </View>
+          </TouchableOpacity>
+
           <Text style={styles.welcomeText}>Welcome!</Text>
           <Text style={styles.usernameText}>{user.username}</Text>
+          <Text style={styles.tapToChangeText}>Tap to change photo</Text>
         </View>
 
         <View style={styles.infoContainer}>
@@ -40,7 +89,7 @@ const HomeScreen = ({ user, onLogout, onOpenChat }) => {
         <TouchableOpacity style={styles.logoutButton} onPress={onLogout}>
           <Text style={styles.logoutButtonText}>Logout</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -50,14 +99,55 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
-  content: {
-    flex: 1,
+  scrollContent: {
     padding: 20,
-    justifyContent: "center",
+    flexGrow: 1,
   },
   header: {
     alignItems: "center",
-    marginBottom: 40,
+    marginBottom: 30,
+  },
+  profileImageContainer: {
+    position: "relative",
+    marginBottom: 20,
+  },
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: "#007AFF",
+  },
+  profileImagePlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "#007AFF",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 3,
+    borderColor: "#007AFF",
+  },
+  placeholderText: {
+    fontSize: 48,
+    color: "#fff",
+    fontWeight: "bold",
+  },
+  editBadge: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    backgroundColor: "#34C759",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 3,
+    borderColor: "#fff",
+  },
+  editBadgeText: {
+    fontSize: 20,
   },
   welcomeText: {
     fontSize: 32,
@@ -70,11 +160,17 @@ const styles = StyleSheet.create({
     color: "#007AFF",
     fontWeight: "600",
   },
+  tapToChangeText: {
+    fontSize: 12,
+    color: "#999",
+    marginTop: 5,
+    fontStyle: "italic",
+  },
   infoContainer: {
     backgroundColor: "#fff",
     borderRadius: 10,
     padding: 20,
-    marginBottom: 30,
+    marginBottom: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,

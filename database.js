@@ -19,6 +19,7 @@ export const initDatabase = async () => {
         username TEXT UNIQUE NOT NULL,
         email TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
+        profile_picture TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
 
@@ -33,6 +34,16 @@ export const initDatabase = async () => {
         FOREIGN KEY (receiver_id) REFERENCES users(id)
       );
     `);
+
+        // Migration: Add profile_picture column if it doesn't exist
+    try {
+      await db.runAsync(
+        `ALTER TABLE users ADD COLUMN profile_picture TEXT;`
+      );
+      console.log("Profile picture column added to users table");
+    } catch (err) {
+      console.log("Profile picture column already exists");
+    }
 
     console.log("Database initialized successfully");
   } catch (error) {
@@ -87,6 +98,7 @@ export const loginUser = async (username, password) => {
         id: user.id,
         username: user.username,
         email: user.email,
+        profile_picture: user.profile_picture,
       },
     };
   } catch (error) {
@@ -183,3 +195,18 @@ export const getUnreadCount = async (userId) => {
     return 0;
   }
 };
+
+// Update user profile picture
+export const updateProfilePicture = async (userId, imagePath) => {
+  try {
+    await db.runAsync(
+      "UPDATE users SET profile_picture = ? WHERE id = ?",
+      [imagePath, userId]
+    );
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating profile picture:", error);
+    return { success: false, error: error.message };
+  }
+};
+
